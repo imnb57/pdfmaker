@@ -1,0 +1,37 @@
+name: CI/CD Workflow
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out the repository
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      # Set up Node.js environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "18"
+
+      # Install dependencies
+      - name: Install dependencies
+        run: npm install
+
+      # Log in to EAS CLI
+      - name: Authenticate with EAS CLI
+        run: eas login
+
+      # Run the build for APK
+      - name: Build APK
+        run: eas build --platform android --profile development
+
+      # Push OTA updates
+      - name: Push OTA Update
+        run: eas update
