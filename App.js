@@ -225,7 +225,7 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>PDF Converter</Text>
+      <Text style={styles.title}>Image to PDF converter</Text>
 
       {isLoading && (
         <View style={styles.loadingOverlay}>
@@ -249,7 +249,7 @@ export default function App() {
         onPress={() => setIsRecentPdfsModalVisible(true)}
       >
         <Ionicons name="document-outline" size={24} color="#007bff" />
-        <Text style={styles.iconButtonText}>Recent PDFs</Text>
+        <Text style={styles.iconButtonText}>Your Recent PDFs</Text>
       </TouchableOpacity>
 
       <TouchableOpacity 

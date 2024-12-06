@@ -4,8 +4,9 @@
     "slug": "pdfmaker",
     "version": "1.0.0",
     "orientation": "portrait",
-    "updates":{
-      "enabled":"True"
+    "updates": {
+      "enabled": true,
+      "url": "https://u.expo.dev/7cbab8d7-4322-4c3b-9b34-e3ea22d8f4e8"
     },
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -32,6 +33,9 @@
       "eas": {
         "projectId": "7cbab8d7-4322-4c3b-9b34-e3ea22d8f4e8"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
     }
   }
 }
