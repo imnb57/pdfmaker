@@ -39,4 +39,4 @@ jobs:
 
       # 6. Push OTA Update
       - name: 🔄 Push OTA Update
-        run: eas update --branch master
+        run: eas update --branch master --message "We have provided some updates to your app. Enjoy!!!."
