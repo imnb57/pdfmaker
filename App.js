@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   Image,
   StyleSheet,
+  StatusBar,
   ScrollView,
   Alert,
   ActivityIndicator,
@@ -20,8 +21,6 @@ import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
 import { Buffer } from 'buffer';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
-
-// Optimize image processing
 import * as ImageManipulator from 'expo-image-manipulator';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -53,7 +52,7 @@ export default function App() {
     try {
       const manipulatedImage = await ImageManipulator.manipulateAsync(
         uri,
-        [{ resize: { width: 1600 } }], // Resize while maintaining aspect ratio
+        [{ resize: { width: 1600 } }],
         { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
       );
       return manipulatedImage.uri;
@@ -81,7 +80,7 @@ export default function App() {
         const optimizedImages = await Promise.all(
           result.assets.map(async (asset) => ({
             ...asset,
-            uri: await optimizeImage(asset.uri)
+            uri: await optimizeImage(asset.uri),
           }))
         );
         setImages(optimizedImages);
@@ -106,9 +105,9 @@ export default function App() {
       const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
       for (let i = 0; i < images.length; i++) {
-        const img = images[i];
         setProgress((i + 1) / images.length);
 
+        const img = images[i];
         const imgBytesBase64 = await FileSystem.readAsStringAsync(img.uri, {
           encoding: FileSystem.EncodingType.Base64,
         });
@@ -131,7 +130,6 @@ export default function App() {
           height: embeddedImage.height,
         });
 
-        // Watermark with improved styling
         page.drawText('Developed by @imnb57', {
           x: 10,
           y: 10,
@@ -145,34 +143,28 @@ export default function App() {
       const pdfBytes = await pdfDoc.save();
       const pdfDir = `${FileSystem.documentDirectory}recent_pdfs/`;
       await FileSystem.makeDirectoryAsync(pdfDir, { intermediates: true });
-      
-   // Determine the next file name incrementally
-const generateNextPdfName = (existingFiles) => {
-  const pdfNumbers = existingFiles
-    .map(file => {
-      const match = file.match(/File (\d+)\.pdf$/); // Extract number from file names like "pdf1.pdf"
-      return match ? parseInt(match[1], 10) : null;
-    })
-    .filter(num => num !== null); // Filter out non-matching files
 
-  const nextNumber = pdfNumbers.length > 0 ? Math.max(...pdfNumbers) + 1 : 1; // Increment or start from 1
-  return `File ${nextNumber}.pdf`;
-};
+      const generateNextPdfName = (existingFiles) => {
+        const pdfNumbers = existingFiles
+          .map(file => {
+            const match = file.match(/File (\d+)\.pdf$/);
+            return match ? parseInt(match[1], 10) : null;
+          })
+          .filter(num => num !== null);
+        const nextNumber = pdfNumbers.length > 0 ? Math.max(...pdfNumbers) + 1 : 1;
+        return `File ${nextNumber}.pdf`;
+      };
 
-const pdfFileName = generateNextPdfName(recentPdfs.map(file => file.split('/').pop()));
-const pdfUri = `${pdfDir}${pdfFileName}`;
-
+      const pdfFileName = generateNextPdfName(recentPdfs.map(file => file.split('/').pop()));
+      const pdfUri = `${pdfDir}${pdfFileName}`;
 
       await FileSystem.writeAsStringAsync(pdfUri, Buffer.from(pdfBytes).toString('base64'), {
         encoding: FileSystem.EncodingType.Base64,
       });
 
-      // Save to Downloads folder
       await MediaLibrary.createAssetAsync(pdfUri);
-
-      // Update recent PDFs
       setRecentPdfs(prev => [pdfUri, ...prev]);
-      
+
       setIsLoading(false);
       Alert.alert('Success', 'PDF created and saved');
     } catch (error) {
@@ -181,7 +173,6 @@ const pdfUri = `${pdfDir}${pdfFileName}`;
       Alert.alert('Error', `Failed to create PDF: ${error.message}`);
     }
   };
-  
 
   const sharePdf = async (pdfPath) => {
     if (!pdfPath) {
@@ -202,43 +193,39 @@ const pdfUri = `${pdfDir}${pdfFileName}`;
       <Text style={styles.recentPdfText} numberOfLines={1}>
         {item.split('/').pop()}
       </Text>
-  
       <View style={styles.recentPdfActions}>
-        {/* Share Button */}
         <TouchableOpacity onPress={() => sharePdf(item)}>
           <Ionicons name="share-outline" size={24} color="#007bff" />
         </TouchableOpacity>
-  
-        {/* Delete Button for Individual PDF */}
         <TouchableOpacity onPress={() => deletePdf(item)}>
           <Ionicons name="trash-outline" size={24} color="#ff4d4d" />
         </TouchableOpacity>
       </View>
     </View>
   );
-  
+
   const deletePdf = async (pdfPath) => {
     try {
       await FileSystem.deleteAsync(pdfPath);
-      setRecentPdfs(prev => prev.filter(file => file !== pdfPath)); // Remove PDF from the state
+      setRecentPdfs(prev => prev.filter(file => file !== pdfPath));
       Alert.alert('Deleted', 'PDF has been removed');
     } catch (error) {
       console.error('Failed to delete PDF:', error);
       Alert.alert('Error', 'Could not delete the PDF');
     }
   };
-  
+
   const clearAllPdfs = async () => {
     try {
       await Promise.all(recentPdfs.map(pdfPath => FileSystem.deleteAsync(pdfPath)));
-      setRecentPdfs([]); // Clear the state
+      setRecentPdfs([]);
       Alert.alert('Success', 'All PDFs have been removed');
     } catch (error) {
       console.error('Failed to clear PDFs:', error);
       Alert.alert('Error', 'Could not clear PDFs');
     }
   };
-  
+
   const RecentPdfsModal = () => (
     <Modal
       animationType="slide"
@@ -249,15 +236,13 @@ const pdfUri = `${pdfDir}${pdfFileName}`;
       <BlurView intensity={50} style={styles.modalBackground}>
         <View style={styles.modalContainer}>
           <Text style={styles.modalTitle}>Recent PDFs</Text>
-  
-          {/* Clear All Button */}
           <TouchableOpacity
             style={styles.clearAllButton}
             onPress={clearAllPdfs}
           >
             <Text style={styles.clearAllButtonText}>Clear All PDFs</Text>
           </TouchableOpacity>
-  
+
           <FlatList
             data={recentPdfs}
             renderItem={renderRecentPdfItem}
@@ -266,7 +251,7 @@ const pdfUri = `${pdfDir}${pdfFileName}`;
               <Text style={styles.emptyListText}>No recent PDFs</Text>
             }
           />
-  
+
           <TouchableOpacity
             style={styles.modalCloseButton}
             onPress={() => setIsRecentPdfsModalVisible(false)}
@@ -277,93 +262,53 @@ const pdfUri = `${pdfDir}${pdfFileName}`;
       </BlurView>
     </Modal>
   );
-  
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Image to PDF converter</Text>
+    <>
+      <StatusBar barStyle="dark-content" backgroundColor="#f0f4f8" />
+      <View style={styles.container}>
+        <Text style={styles.title}>Image to PDF converter</Text>
 
-      {isLoading && (
-        <View style={styles.loadingOverlay}>
-          <ActivityIndicator size="large" color="#007bff" />
-          <Text style={styles.loadingText}>
-            Converting Images... {`${Math.round(progress * 100)}%`}
-          </Text>
-          <View style={styles.progressBar}>
-            <View 
-              style={[
-                styles.progressIndicator, 
-                { width: `${progress * 100}%` }
-              ]} 
-            />
+        {isLoading && (
+          <View style={styles.loadingOverlay}>
+            <ActivityIndicator size="large" color="#007bff" />
+            <Text style={styles.loadingText}>
+              Converting Images... {`${Math.round(progress * 100)}%`}
+            </Text>
+            <View style={styles.progressBar}>
+              <View
+                style={[
+                  styles.progressIndicator,
+                  { width: `${progress * 100}%` }
+                ]}
+              />
+            </View>
           </View>
-        </View>
-      )}
+        )}
 
-      <TouchableOpacity 
-        style={styles.iconButton} 
-        onPress={() => setIsRecentPdfsModalVisible(true)}
-      >
-        <Ionicons name="document-outline" size={24} color="#007bff" />
-        <Text style={styles.iconButtonText}>Your Recent PDFs</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => setIsRecentPdfsModalVisible(true)}
+        >
+          <Ionicons name="document-outline" size={24} color="#007bff" />
+          <Text style={styles.iconButtonText}>Your Recent PDFs</Text>
+        </TouchableOpacity>
 
-      <TouchableOpacity 
-        style={styles.selectImagesButton} 
-        onPress={selectImages} 
-        disabled={isLoading}
-      >
-        <Ionicons name="images-outline" size={24} color="white" />
-        <Text style={styles.selectImagesButtonText}>Select Images</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.selectImagesButton}
+          onPress={selectImages}
+          disabled={isLoading}
+        >
+          <Ionicons name="images-outline" size={24} color="white" />
+          <Text style={styles.selectImagesButtonText}>Select Images</Text>
+        </TouchableOpacity>
 
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false} 
-        style={styles.imagePreviewContainer}
-      >
-        {images.map((image, index) => (
-          <Image 
-            key={index} 
-            source={{ uri: image.uri }} 
-            style={styles.imagePreview} 
-          />
-        ))}
-      </ScrollView>
-
-      <View style={styles.actionButtonContainer}>
-  
-  {/* Create PDF Button */}
-  <TouchableOpacity 
-    style={[
-      styles.actionButton, 
-      (images.length === 0 || isLoading) && styles.disabledButton
-    ]} 
-    onPress={createPdf} 
-    disabled={images.length === 0 || isLoading}
-  >
-    <Ionicons name="create-outline" size={24} color="white" />
-    <Text style={styles.actionButtonText}>
-      {isLoading ? 'Creating...' : 'Create PDF'}
-    </Text>
-  </TouchableOpacity>
-
-  {/* Clear Images Button */}
-  <TouchableOpacity 
-    style={styles.clearButton} 
-    onPress={() => setImages([])} 
-    disabled={isLoading}
-  >
-    <Ionicons name="trash-outline" size={24} color="white" />
-  </TouchableOpacity>
-
-</View>
-
-
-      <RecentPdfsModal />
-    </View>
+        <RecentPdfsModal />
+      </View>
+    </>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
