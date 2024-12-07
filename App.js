@@ -73,7 +73,7 @@ export default function App() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: 'images',
+        mediaTypes: ['images'],
         allowsMultipleSelection: true,
         quality: 1,
       });
@@ -284,9 +284,9 @@ export default function App() {
 
   return (
   <>
-   <StatusBar barStyle="dark-content" backgroundColor="#f0f4f8" />
+   <StatusBar style='dark' />
     <View style={styles.container}>
-      <Text style={styles.title}>Image to PDF converter</Text>
+      <Text style={styles.title}>Image  PDF converter</Text>
 
       {isLoading && (
         <View style={styles.loadingOverlay}>
