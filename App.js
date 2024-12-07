@@ -193,6 +193,8 @@ export default function App() {
           Alert.alert('Error', 'Failed to save PDF to media library.');
         }
       };
+      await saveToMediaLibrary(pdfUri);
+
 
       // Update recent PDFs
       setRecentPdfs((prev) => [pdfUri, ...prev]);
