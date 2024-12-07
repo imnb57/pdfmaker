@@ -24,14 +24,18 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      # Step 4: Authenticate with EAS CLI using the token
+      # Step 4: Install EAS CLI
+      - name: Install EAS CLI
+        run: npm install -g eas-cli
+
+      # Step 5: Authenticate with EAS CLI using the token
       - name: Authenticate with EAS CLI
         run: eas login --token ${{ secrets.EAS_TOKEN }}
 
-      # Step 5: Build APK for Android
+      # Step 6: Build APK for Android
       - name: Build APK
         run: eas build --platform android --profile development
 
-      # Step 6: Push OTA Update to Expo
+      # Step 7: Push OTA Update to Expo
       - name: Push OTA Update
         run: eas update
