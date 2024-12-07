@@ -10,32 +10,32 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout the repository
+      # Check out the repository
       - name: 🏗 Setup repo
         uses: actions/checkout@v3
 
-      # Step 2: Set up Node.js
+      # Set up Node.js environment
       - name: 🏗 Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: 18.x
-          cache: yarn
+          cache: npm  # Change cache to npm
 
-      # Step 3: Set up EAS CLI and Authenticate
-      - name: 🛠️ Setup EAS CLI
+      # Authenticate with EAS CLI
+      - name: Authenticate with EAS CLI
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      # Step 4: Install dependencies
+      # Install dependencies with npm
       - name: 📦 Install dependencies
-        run: yarn install
+        run: npm install
 
-      # Step 5: Build APK for Android
+      # Build APK for Android
       - name: 🚀 Build APK
         run: eas build --platform android --profile development --non-interactive
 
-      # Step 6: Push OTA Update to Expo
+      # Push OTA Update
       - name: 🔄 Push OTA Update
         run: eas update
