@@ -19,15 +19,20 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 18.x
-          cache: npm  # Change cache to npm
+          cache: npm
 
       # Authenticate with EAS CLI
       - name: Authenticate with EAS CLI
-        uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          expo-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          echo "Setting up EAS authentication"
+          eas login --token ${{ secrets.EAS_TOKEN }}
+
+      # Clean and Install EAS CLI
+      - name: Clean and Install EAS CLI
+        run: |
+          npm uninstall -g eas-cli
+          npm install -g eas-cli@latest
+          eas --version
 
       # Install dependencies with npm
       - name: 📦 Install dependencies
@@ -36,6 +41,8 @@ jobs:
       # Build APK for Android
       - name: 🚀 Build APK
         run: eas build --platform android --profile development --non-interactive
+        env:
+          EAS_TOKEN: ${{ secrets.EAS_TOKEN }}
 
       # Push OTA Update
       - name: 🔄 Push OTA Update
