@@ -174,7 +174,25 @@ export default function App() {
       );
 
       // Save to media library
-      await MediaLibrary.createAssetAsync(pdfUri);
+      const saveToMediaLibrary = async (fileUri) => {
+        try {
+          const { status } = await MediaLibrary.requestPermissionsAsync(true); // 'true' requests write permissions.
+          
+          if (status !== 'granted') {
+            Alert.alert(
+              'Permission Required',
+              'Please allow access to your media library to save the PDF.'
+            );
+            return;
+          }
+      
+          await MediaLibrary.createAssetAsync(fileUri);
+          Alert.alert('Success', 'PDF saved to your media library.');
+        } catch (error) {
+          console.error('Media Library Error:', error);
+          Alert.alert('Error', 'Failed to save PDF to media library.');
+        }
+      };
 
       // Update recent PDFs
       setRecentPdfs((prev) => [pdfUri, ...prev]);
