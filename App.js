@@ -68,23 +68,26 @@ export default function App() {
   const selectImages = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: 'image/*',  // Note: changed to string, not array
+        type: 'image/*',
         multiple: true,
       });
-      
-      console.log('Document Picker Response:', result);
-      
+  
       if (!result.canceled && result.assets) {
-        const selectedImages = result.assets;
+        const selectedImages = result.assets.map((asset, index) => ({
+          ...asset,
+          originalIndex: index, // Add index to track selection order
+        }));
+  
         const optimizedImages = await Promise.all(
           selectedImages.map(async (asset) => ({
             ...asset,
             uri: await optimizeImage(asset.uri),
           }))
         );
-        
-        console.log('Optimized Images:', optimizedImages);
-        setImages(optimizedImages);
+  
+        optimizedImages.sort((a, b) => a.originalIndex - b.originalIndex); // Sort by original index
+  
+        setImages(optimizedImages); // Update state
       }
     } catch (error) {
       console.error('Failed to select images using DocumentPicker', error);
