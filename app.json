@@ -6,8 +6,7 @@
     "orientation": "portrait",
     "updates": {
       "enabled": true,
-      "checkOnLoad": true,
-      "checkAutomatically": true,
+      "checkAutomatically": "ON_LOAD",
       "url": "https://u.expo.dev/7cbab8d7-4322-4c3b-9b34-e3ea22d8f4e8"
     },
     "icon": "./assets/icon.png",
