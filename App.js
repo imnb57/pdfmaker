@@ -72,7 +72,7 @@ export default function App() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaType: 'photo',
         allowsMultipleSelection: true,
         quality: 1,
       });
@@ -132,7 +132,7 @@ export default function App() {
         });
 
         // Watermark with improved styling
-        page.drawText('Generated with PDF Converter', {
+        page.drawText('Developed by @imnb57', {
           x: 10,
           y: 10,
           size: 10,
@@ -146,8 +146,22 @@ export default function App() {
       const pdfDir = `${FileSystem.documentDirectory}recent_pdfs/`;
       await FileSystem.makeDirectoryAsync(pdfDir, { intermediates: true });
       
-      const pdfFileName = `converted_${Date.now()}.pdf`;
-      const pdfUri = `${pdfDir}${pdfFileName}`;
+   // Determine the next file name incrementally
+const generateNextPdfName = (existingFiles) => {
+  const pdfNumbers = existingFiles
+    .map(file => {
+      const match = file.match(/File (\d+)\.pdf$/); // Extract number from file names like "pdf1.pdf"
+      return match ? parseInt(match[1], 10) : null;
+    })
+    .filter(num => num !== null); // Filter out non-matching files
+
+  const nextNumber = pdfNumbers.length > 0 ? Math.max(...pdfNumbers) + 1 : 1; // Increment or start from 1
+  return `File ${nextNumber}.pdf`;
+};
+
+const pdfFileName = generateNextPdfName(recentPdfs.map(file => file.split('/').pop()));
+const pdfUri = `${pdfDir}${pdfFileName}`;
+
 
       await FileSystem.writeAsStringAsync(pdfUri, Buffer.from(pdfBytes).toString('base64'), {
         encoding: FileSystem.EncodingType.Base64,
@@ -185,15 +199,46 @@ export default function App() {
 
   const renderRecentPdfItem = ({ item }) => (
     <View style={styles.recentPdfItem}>
-      <Text style={styles.recentPdfText} numberOfLines={1}>{item.split('/').pop()}</Text>
+      <Text style={styles.recentPdfText} numberOfLines={1}>
+        {item.split('/').pop()}
+      </Text>
+  
       <View style={styles.recentPdfActions}>
+        {/* Share Button */}
         <TouchableOpacity onPress={() => sharePdf(item)}>
           <Ionicons name="share-outline" size={24} color="#007bff" />
+        </TouchableOpacity>
+  
+        {/* Delete Button for Individual PDF */}
+        <TouchableOpacity onPress={() => deletePdf(item)}>
+          <Ionicons name="trash-outline" size={24} color="#ff4d4d" />
         </TouchableOpacity>
       </View>
     </View>
   );
-
+  
+  const deletePdf = async (pdfPath) => {
+    try {
+      await FileSystem.deleteAsync(pdfPath);
+      setRecentPdfs(prev => prev.filter(file => file !== pdfPath)); // Remove PDF from the state
+      Alert.alert('Deleted', 'PDF has been removed');
+    } catch (error) {
+      console.error('Failed to delete PDF:', error);
+      Alert.alert('Error', 'Could not delete the PDF');
+    }
+  };
+  
+  const clearAllPdfs = async () => {
+    try {
+      await Promise.all(recentPdfs.map(pdfPath => FileSystem.deleteAsync(pdfPath)));
+      setRecentPdfs([]); // Clear the state
+      Alert.alert('Success', 'All PDFs have been removed');
+    } catch (error) {
+      console.error('Failed to clear PDFs:', error);
+      Alert.alert('Error', 'Could not clear PDFs');
+    }
+  };
+  
   const RecentPdfsModal = () => (
     <Modal
       animationType="slide"
@@ -204,6 +249,15 @@ export default function App() {
       <BlurView intensity={50} style={styles.modalBackground}>
         <View style={styles.modalContainer}>
           <Text style={styles.modalTitle}>Recent PDFs</Text>
+  
+          {/* Clear All Button */}
+          <TouchableOpacity
+            style={styles.clearAllButton}
+            onPress={clearAllPdfs}
+          >
+            <Text style={styles.clearAllButtonText}>Clear All PDFs</Text>
+          </TouchableOpacity>
+  
           <FlatList
             data={recentPdfs}
             renderItem={renderRecentPdfItem}
@@ -212,8 +266,9 @@ export default function App() {
               <Text style={styles.emptyListText}>No recent PDFs</Text>
             }
           />
-          <TouchableOpacity 
-            style={styles.modalCloseButton} 
+  
+          <TouchableOpacity
+            style={styles.modalCloseButton}
             onPress={() => setIsRecentPdfsModalVisible(false)}
           >
             <Text style={styles.modalCloseButtonText}>Close</Text>
@@ -222,6 +277,7 @@ export default function App() {
       </BlurView>
     </Modal>
   );
+  
 
   return (
     <View style={styles.container}>
@@ -276,26 +332,33 @@ export default function App() {
       </ScrollView>
 
       <View style={styles.actionButtonContainer}>
-        <TouchableOpacity 
-          style={[
-            styles.actionButton, 
-            images.length === 0 && styles.disabledButton
-          ]} 
-          onPress={createPdf} 
-          disabled={images.length === 0 || isLoading}
-        >
-          <Ionicons name="create-outline" size={24} color="white" />
-          <Text style={styles.actionButtonText}>Create PDF</Text>
-        </TouchableOpacity>
+  
+  {/* Create PDF Button */}
+  <TouchableOpacity 
+    style={[
+      styles.actionButton, 
+      (images.length === 0 || isLoading) && styles.disabledButton
+    ]} 
+    onPress={createPdf} 
+    disabled={images.length === 0 || isLoading}
+  >
+    <Ionicons name="create-outline" size={24} color="white" />
+    <Text style={styles.actionButtonText}>
+      {isLoading ? 'Creating...' : 'Create PDF'}
+    </Text>
+  </TouchableOpacity>
 
-        <TouchableOpacity 
-          style={styles.clearButton} 
-          onPress={() => setImages([])} 
-          disabled={isLoading}
-        >
-          <Ionicons name="trash-outline" size={24} color="white" />
-        </TouchableOpacity>
-      </View>
+  {/* Clear Images Button */}
+  <TouchableOpacity 
+    style={styles.clearButton} 
+    onPress={() => setImages([])} 
+    disabled={isLoading}
+  >
+    <Ionicons name="trash-outline" size={24} color="white" />
+  </TouchableOpacity>
+
+</View>
+
 
       <RecentPdfsModal />
     </View>
@@ -309,6 +372,7 @@ const styles = StyleSheet.create({
     paddingTop: 50,
     paddingHorizontal: 16,
   },
+  
   title: {
     fontSize: 24,
     fontWeight: 'bold',
@@ -316,6 +380,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
   },
+
   iconButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -326,11 +391,13 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
   },
+
   iconButtonText: {
     marginLeft: 8,
     color: '#007bff',
     fontWeight: '600',
   },
+
   selectImagesButton: {
     flexDirection: 'row',
     backgroundColor: '#007bff',
@@ -341,16 +408,19 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     elevation: 3,
   },
+
   selectImagesButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 10,
   },
+
   imagePreviewContainer: {
     marginBottom: 15,
     maxHeight: 120,
   },
+
   imagePreview: {
     width: 100,
     height: 100,
@@ -359,11 +429,13 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#e0e0e0',
   },
+
   actionButtonContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+
   actionButton: {
     flexDirection: 'row',
     flex: 1,
@@ -374,36 +446,44 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 10,
     elevation: 3,
-    
   },
+
   actionButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
     marginLeft: 10,
   },
+
   clearButton: {
     backgroundColor: '#ff4d4d',
     padding: 15,
     borderRadius: 12,
     elevation: 3,
   },
+
   disabledButton: {
     backgroundColor: '#cccccc',
+    opacity: 0.6,
   },
+
   // Loading Overlay Styles
   loadingOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: 'rgba(255,255,255,0.9)',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',   // Align content at the top
     alignItems: 'center',
+    paddingBottom:128,                
     zIndex: 1000,
   },
+  
+
   loadingText: {
-    marginTop: 15,
+    marginTop:16,
     fontSize: 16,
     color: '#007bff',
   },
+
   progressBar: {
     width: '80%',
     height: 10,
@@ -412,16 +492,19 @@ const styles = StyleSheet.create({
     marginTop: 15,
     overflow: 'hidden',
   },
+
   progressIndicator: {
     height: '100%',
     backgroundColor: '#007bff',
   },
+
   // Recent PDFs Modal Styles
   modalBackground: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
+
   modalContainer: {
     width: SCREEN_WIDTH * 0.9,
     backgroundColor: 'white',
@@ -429,12 +512,14 @@ const styles = StyleSheet.create({
     padding: 20,
     maxHeight: '70%',
   },
+
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 15,
     textAlign: 'center',
   },
+
   recentPdfItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -443,13 +528,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
+
   recentPdfText: {
     flex: 1,
     marginRight: 10,
   },
+
   recentPdfActions: {
     flexDirection: 'row',
   },
+
   modalCloseButton: {
     marginTop: 15,
     backgroundColor: '#007bff',
@@ -457,19 +545,56 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
   },
+
   modalCloseButtonText: {
     color: 'white',
     fontWeight: '600',
     fontSize: 16,
   },
+
   emptyListText: {
     textAlign: 'center',
     color: '#888',
     marginTop: 20,
   },
+
+  clearAllButton: {
+    backgroundColor: '#ffeb3d',
+    padding: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+
+  clearAllButtonText: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    color: 'black',
+  },
+
+  recentPdfActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: 80,
+  },
+
+  deleteButton: {
+    paddingHorizontal: 8,
+  },
+
+  // Updated Action Button Disabled Effect
+  disabledActionButtonText: {
+    opacity: 0.6,
+  },
+
+  clearButtonText: {
+    fontWeight: '600',
+    color: 'white',
+    fontSize: 16,
+  }
 });
 
-// Adding necessary dependencies
-// Make sure to install these packages:
-// npm install expo-image-picker expo-file-system expo-sharing expo-media-library expo-image-manipulator @expo/vector-icons expo-blur
 
+// Add the following dependencies in your project:
+// npm install expo-image-picker expo-file-system expo-sharing expo-media-library expo-image-manipulator @expo/vector-icons expo-blur
