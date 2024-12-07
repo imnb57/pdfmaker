@@ -10,35 +10,28 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
-      # 1. Checkout the repository
+      # Step 1: Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      # 2. Set up Node.js environment
+      # Step 2: Set up Node.js environment
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
           node-version: "18"
 
-      # 3. Install dependencies
+      # Step 3: Install project dependencies
       - name: Install dependencies
         run: npm install
 
-      # 4. Install EAS CLI globally
-      - name: Install EAS CLI
-        run: npm install -g eas-cli
-
-      # 5. Authenticate with EAS CLI using the token
+      # Step 4: Authenticate with EAS CLI using the token
       - name: Authenticate with EAS CLI
-        run: |
-          echo "EAS_TOKEN=${{ secrets.EAS_TOKEN }}" >> $GITHUB_ENV
-          eas login
+        run: eas login --token ${{ secrets.EAS_TOKEN }}
 
-      # 6. Build APK for Android
+      # Step 5: Build APK for Android
       - name: Build APK
         run: eas build --platform android --profile development
 
-      # 7. Push OTA Updates to Expo
+      # Step 6: Push OTA Update to Expo
       - name: Push OTA Update
         run: eas update
