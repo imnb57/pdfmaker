@@ -595,3 +595,40 @@ const styles = StyleSheet.create({
       fontSize: 16,
     },
   });
+
+
+
+  //image selection order by claude alphabetically 
+  const selectImages = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'image/*',
+        multiple: true,
+      });
+    
+      if (!result.canceled && result.assets) {
+        // Sort assets by filename to ensure consistent order
+        const sortedAssets = result.assets.sort((a, b) => 
+          a.name.localeCompare(b.name)
+        );
+  
+        console.log('Sorted assets order:', sortedAssets.map(asset => asset.name));
+  
+        const orderedImages = [];
+        for (const asset of sortedAssets) {
+          const optimizedUri = await optimizeImage(asset.uri);
+          orderedImages.push({ 
+            ...asset, 
+            uri: optimizedUri
+          });
+        }
+  
+        console.log('Processed images order:', orderedImages.map(img => img.name));
+  
+        setImages(orderedImages);
+      }
+    } catch (error) {
+      console.error('Failed to select images using DocumentPicker', error);
+      Alert.alert('Error', 'Failed to select images');
+    }
+  };

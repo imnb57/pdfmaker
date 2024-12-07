@@ -64,38 +64,43 @@ export default function App() {
       return uri;
     }
   };
-
   const selectImages = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: 'image/*',
         multiple: true,
       });
-  
+    
       if (!result.canceled && result.assets) {
-        const selectedImages = result.assets.map((asset, index) => ({
+        // Add an index to each asset to track original selection order
+        const indexedAssets = result.assets.map((asset, index) => ({
           ...asset,
-          originalIndex: index, // Add index to track selection order
+          originalIndex: index
         }));
   
-        const optimizedImages = await Promise.all(
-          selectedImages.map(async (asset) => ({
-            ...asset,
-            uri: await optimizeImage(asset.uri),
-          }))
-        );
+        console.log('Original assets order:', indexedAssets.map(asset => asset.name));
   
-        optimizedImages.sort((a, b) => a.originalIndex - b.originalIndex); // Sort by original index
+        const orderedImages = [];
+        for (const asset of indexedAssets) {
+          const optimizedUri = await optimizeImage(asset.uri);
+          orderedImages.push({ 
+            ...asset, 
+            uri: optimizedUri
+          });
+        }
   
-        setImages(optimizedImages); // Update state
+        // Sort back to original selection order based on originalIndex
+        orderedImages.sort((a, b) => a.originalIndex - b.originalIndex);
+  
+        console.log('Processed images order:', orderedImages.map(img => img.name));
+  
+        setImages(orderedImages);
       }
     } catch (error) {
       console.error('Failed to select images using DocumentPicker', error);
       Alert.alert('Error', 'Failed to select images');
     }
   };
-  
-
   const createPdf = async () => {
     if (images.length === 0) {
       Alert.alert('No Images', 'Please select images first');
