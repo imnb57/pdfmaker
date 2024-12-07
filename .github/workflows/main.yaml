@@ -11,31 +11,31 @@ jobs:
 
     steps:
       # Step 1: Checkout the repository
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      - name: 🏗 Setup repo
+        uses: actions/checkout@v3
 
-      # Step 2: Set up Node.js environment
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
+      # Step 2: Set up Node.js
+      - name: 🏗 Setup Node
+        uses: actions/setup-node@v3
         with:
-          node-version: "18"
+          node-version: 18.x
+          cache: yarn
 
-      # Step 3: Install project dependencies
-      - name: Install dependencies
-        run: npm install
+      # Step 3: Set up EAS CLI and Authenticate
+      - name: 🛠️ Setup EAS CLI
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
 
-      # Step 4: Install EAS CLI
-      - name: Install EAS CLI
-        run: npm install -g eas-cli
+      # Step 4: Install dependencies
+      - name: 📦 Install dependencies
+        run: yarn install
 
-      # Step 5: Authenticate with EAS CLI using the token
-      - name: Authenticate with EAS CLI
-        run: eas login --token ${{ secrets.EAS_TOKEN }}
+      # Step 5: Build APK for Android
+      - name: 🚀 Build APK
+        run: eas build --platform android --profile development --non-interactive
 
-      # Step 6: Build APK for Android
-      - name: Build APK
-        run: eas build --platform android --profile development
-
-      # Step 7: Push OTA Update to Expo
-      - name: Push OTA Update
+      # Step 6: Push OTA Update to Expo
+      - name: 🔄 Push OTA Update
         run: eas update
