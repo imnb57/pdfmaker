@@ -31,7 +31,9 @@ jobs:
 
       # 5. Authenticate with EAS CLI using the token
       - name: Authenticate with EAS CLI
-        run: eas login --token ${{ secrets.EAS_TOKEN }}
+        run: |
+          echo "EAS_TOKEN=${{ secrets.EAS_TOKEN }}" >> $GITHUB_ENV
+          eas login
 
       # 6. Build APK for Android
       - name: Build APK
