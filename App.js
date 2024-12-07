@@ -12,7 +12,8 @@ import {
   Modal,
   Dimensions,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+
+import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
@@ -66,32 +67,31 @@ export default function App() {
 
   const selectImages = async () => {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission Needed', 'Please grant photo library access');
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        allowsMultipleSelection: true,
-        quality: 1,
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'image/*',  // Note: changed to string, not array
+        multiple: true,
       });
-
-      if (!result.canceled) {
+      
+      console.log('Document Picker Response:', result);
+      
+      if (!result.canceled && result.assets) {
+        const selectedImages = result.assets;
         const optimizedImages = await Promise.all(
-          result.assets.map(async (asset) => ({
+          selectedImages.map(async (asset) => ({
             ...asset,
             uri: await optimizeImage(asset.uri),
           }))
         );
+        
+        console.log('Optimized Images:', optimizedImages);
         setImages(optimizedImages);
       }
     } catch (error) {
-      console.error('Image selection error:', error);
+      console.error('Failed to select images using DocumentPicker', error);
       Alert.alert('Error', 'Failed to select images');
     }
   };
+  
 
   const createPdf = async () => {
     if (images.length === 0) {
@@ -286,7 +286,7 @@ export default function App() {
   <>
    <StatusBar style='dark' />
     <View style={styles.container}>
-      <Text style={styles.title}>Image  PDF converter</Text>
+      <Text style={styles.title}>Image to  PDF converter</Text>
 
       {isLoading && (
         <View style={styles.loadingOverlay}>

@@ -44,9 +44,7 @@
         "projectId": "7cbab8d7-4322-4c3b-9b34-e3ea22d8f4e8"
       }
     },
-    "runtimeVersion": {
-      "policy": "appVersion"
-    },
+    "runtimeVersion": "1.0.0",
     "plugins": [
       [
         "expo-image-picker",
